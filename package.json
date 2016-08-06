@@ -1,0 +1,22 @@
+{
+  "name": "evv",
+  "version": "0.5.0",
+  "description": "earth quake visuzlization around a volcano",
+  "main": "server.js",
+  "scripts": {
+    "test": "NODE_ENV=development && node server.js",
+    "eslint": "eslint --init",
+    "browserify": "browserify -t [ envify purge ] -t require-globify public/app.js -o public/bundle.js"
+  },
+  "author": "Justin Parra <parra.justin.main@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "browserify": "^13.1.0",
+    "compression": "^1.6.2",
+    "express": "^4.14.0",
+    "python-shell": "^0.4.0",
+    "randomstring": "^1.1.5",
+    "require-globify": "^1.4.0"
+  }
+}
