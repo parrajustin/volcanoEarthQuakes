@@ -37,7 +37,7 @@ def runWarp():
     runTranslate()
 
 def runTranslate():
-    val = 'gdal_translate -scale 0 2470 0 65535 -ot UInt16 -outsize 400 400 -of ENVI ' + str(sys.argv[3]) + ' ' + str(sys.argv[5]) + '.bin'
+    val = 'gdal_translate -scale 0 2470 0 65535 -ot UInt16 -outsize 400 400 -of ENVI ' + str(sys.argv[3]) + ' public/' + str(sys.argv[5]) + '.store.bin'
     valBroken = val.split(' ')
     subprocess.call(valBroken)
     runPretty()
@@ -49,7 +49,10 @@ def runPretty():
     val = 'gdaldem hillshade -combined '+ str(sys.argv[3]) +' ' + str(sys.argv[3]) + '.HS'
     valBroken = val.split(' ')
     subprocess.call(valBroken)
-    val = 'gdaldem slope -combined '+ str(sys.argv[3]) +' ' + str(sys.argv[3]) + '.S'
+    val = 'gdaldem slope '+ str(sys.argv[3]) +' ' + str(sys.argv[3]) + '.S'
+    valBroken = val.split(' ')
+    subprocess.call(valBroken)
+    val = 'gdaldem color-relief '+ str(sys.argv[3]) + '.S color_slope.txt ' + str(sys.argv[3]) + '.CRS'
     valBroken = val.split(' ')
     subprocess.call(valBroken)
     makeXML()
@@ -72,6 +75,11 @@ def makeXML():
     f.write('      <RasterSymbolizer opacity="0.1" mode="multiply" scaling="bilinear" />\n')
     f.write('    </Rule>\n')
     f.write('  </Style>\n')
+    f.write('  <Style name="lake style">\n')
+    f.write('    <Rule>\n')
+    f.write('       <PolygonSymbolizer fill="rgb(180,210,230)" />\n')
+    f.write('    </Rule>\n')
+    f.write('  </Style>\n')
     f.write('  <Layer name="color relief">\n')
     f.write('    <StyleName>color relief style</StyleName>\n')
     f.write('    <Datasource>\n')
@@ -90,8 +98,15 @@ def makeXML():
     f.write('    <StyleName>hillshade style</StyleName>\n')
     f.write('    <Datasource>\n')
     f.write('      <Parameter name="type">gdal</Parameter>\n')
-    f.write('      <Parameter name="file">' + str(sys.argv[3]) + '.S</Parameter>\n')
+    f.write('      <Parameter name="file">' + str(sys.argv[3]) + '.CRS</Parameter>\n')
     f.write('    </Datasource>\n')
+    f.write('  </Layer>\n')
+    f.write('  <Layer name="lake">\n')
+    f.write('      <StyleName>lake style</StyleName>\n')
+    f.write('      <Datasource>\n')
+    f.write('          <Parameter name="type">shape</Parameter>\n')
+    f.write('          <Parameter name="file">/home/jparra/Documents/veq/resources/alaska_water.shp</Parameter>\n')
+    f.write('      </Datasource>\n')
     f.write('  </Layer>\n')
     f.write('</Map>\n')
     f.close()

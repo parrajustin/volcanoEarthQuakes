@@ -1,5 +1,5 @@
 {
-  "name": "evv",
+  "name": "viz",
   "version": "0.5.0",
   "description": "earth quake visuzlization around a volcano",
   "main": "server.js",
@@ -15,6 +15,9 @@
     "browserify": "^13.1.0",
     "compression": "^1.6.2",
     "express": "^4.14.0",
+    "lodash": "^4.14.1",
+    "mapnik": "^3.5.13",
+    "node-persist": "0.0.11",
     "python-shell": "^0.4.0",
     "randomstring": "^1.1.5",
     "require-globify": "^1.4.0"
