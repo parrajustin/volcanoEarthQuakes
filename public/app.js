@@ -1,7 +1,9 @@
 /* eslint no-unused-vars: ["warn"] guard-for-in: "off" */
-/* global THREE window document requestAnimationFrame Stats dat $ Math XMLHttpRequest*/
+/* global THREE window document requestAnimationFrame Stats dat $ Math XMLHttpRequest d3*/
 
-
+var sceneCss;
+var renderCss;
+var planeMesh;
 
 var scene;
 var camera;
@@ -30,24 +32,24 @@ var DOINGWORK = false;
 
 
 var TextObject = {
-  Latitude: 60.4849066,
-  Longitude: -152.7451997,
-  Elevation: 2.7,
-  startDate: 2009,
-  endDate: 2010,
-  startMonth: 1,
-  endMonth: 1,
-  startDay: 1,
-  endDay: 1,
-  startHour: 0,
-  endHour: 0,
-  startMin: 0,
-  endMin: 0,
-  startSec: 0,
-  endSec: 0,
-  play: 0,
-  radiusDegrees: 1,
-  VolcanoName: "60.4849066,-152.7451997,2.7",
+  Latitude      : 60.4849066,
+  Longitude     : -152.7451997,
+  Elevation     : 2.7,
+  startDate     : 2009,
+  endDate       : 2010,
+  startMonth    : 1,
+  endMonth      : 1,
+  startDay      : 1,
+  endDay        : 1,
+  startHour     : 0,
+  endHour       : 0,
+  startMin      : 0,
+  endMin        : 0,
+  startSec      : 0,
+  endSec        : 0,
+  play          : 0,
+  radiusDegrees : 0.5,
+  VolcanoName   : "60.4849066,-152.7451997,2.7",
   // htmlGET: function(val) {
   //   if(val === 0)
   //     return this.startDate.toString() + "%2D" + this.startMonth.toString() + "%2D" + this.startDay.toString() + "T" + this.startHour.toString() +
@@ -55,7 +57,7 @@ var TextObject = {
   //   return this.endDate.toString() + "%2D" + this.endMonth.toString() + "%2D" + this.endDay.toString() + "T" + this.endHour.toString() + "%3A" +
   //     this.endMin.toString() + "%3A" + this.endSec.toString();
   // },
-  pad: function(val) {
+  pad           : function(val) {
     if(val.toString().length === 1)
       return("0" + val.toString());
     return val;
@@ -75,30 +77,29 @@ var TextObject = {
     }
     $(".loading").css("display", "block");
 
-    var name = '';
     $.ajax({
-      url: '/api/map',
-      dataType: 'json',
-      contentType: 'application/json',
-      type: 'POST',
-      data: JSON.stringify({
-        minLat: text.Latitude - text.radiusDegrees,
-        maxLat: text.Latitude + text.radiusDegrees,
-        minLong: text.Longitude - text.radiusDegrees,
-        maxLong: text.Longitude + text.radiusDegrees
+      url         : '/api/map',
+      dataType    : 'json',
+      contentType : 'application/json',
+      type        : 'POST',
+      data        : JSON.stringify({
+        minLat  : text.Latitude - text.radiusDegrees,
+        maxLat  : text.Latitude + text.radiusDegrees,
+        minLong : text.Longitude - text.radiusDegrees,
+        maxLong : text.Longitude + text.radiusDegrees
       }),
       success: function(data) {
-
-        var d = data["success"];
+        var d = data.success;
 
         $.ajax({
-          url: '/2009T.csv',
-          type: 'GET',
-          async: false,
-          success: function(data) {
+          url     : '/2009T.csv',
+          type    : 'GET',
+          async   : false,
+          success : function(data) {
             query = $.csv.toObjects(data);
             // TODO get rid of this console.log
             // console.log(query);
+            // return;
 
             var dateS = new Date(text.nonHTMLGET(0).toString());
             var dateE = new Date(text.nonHTMLGET(1).toString());
@@ -124,28 +125,26 @@ var TextObject = {
             console.error(this, status, err.toString());
           }.bind(this)
         });
-
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.url, status, err.toString());
       }.bind(this)
     });
-
   },
 
 
 
-  peRef: null, // reference to button for enabled
-  playEnabled: false,
-  playEnabledHidden: false,
-  psRef: null, // reference to slider
-  playStart: 0,
-  playEnd: 0,
-  playLife: 604800000,
-  time: 0,
-  timeText: "YYYY-MM-DDTHH:MM:SSSZ",
-  timeTextCurrent: "YYYY-MM-DDTHH:MM:SSSZ",
-  step: function() {
+  peRef             : null, // reference to button for enabled
+  playEnabled       : false,
+  playEnabledHidden : false,
+  psRef             : null, // reference to slider
+  playStart         : 0,
+  playEnd           : 0,
+  playLife          : 604800000,
+  time              : 0,
+  timeText          : "YYYY-MM-DDTHH:MM:SSSZ",
+  timeTextCurrent   : "YYYY-MM-DDTHH:MM:SSSZ",
+  step              : function() {
     if(!this.playEnabledHidden)
       return;
 
@@ -153,19 +152,19 @@ var TextObject = {
     cleanGeo();
     handleEQ(this, this.time);
   },
-  msPerSecond: 151200000,
-  playButton: function() {
+  msPerSecond : 151200000,
+  playButton  : function() {
     if(!this.playEnabledHidden)
       return;
 
     handleEQ(this, this.time);
     oldTimeSet = lastRender.getTime();
     timeSet = lastRender.getTime();
-    console.log(lastRender.getTime());
+    // console.log(lastRender.getTime());
     this.playRunning = true;
   },
-  playRunning: false,
-  stopButton: function() {
+  playRunning : false,
+  stopButton  : function() {
     this.playRunning = false;
   },
   renderAll: function() {
@@ -182,16 +181,12 @@ var TextObject = {
 
 
 
-
-
-
-
 $.ajax({
-  url: url,
-  cache: true,
-  type: 'GET',
-  async: false,
-  success: function(data) {
+  url     : url,
+  cache   : true,
+  type    : 'GET',
+  async   : false,
+  success : function(data) {
     var v = $.csv.toObjects(data);
     vn = {};
     for(var i = 0; i < v.length; i++) {
@@ -237,6 +232,7 @@ function init() {
   renderer = new THREE.WebGLRenderer({
     antialias: true
   });
+  // renderer = new THREE.render();
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0xf0f0f0);
   document.body.appendChild(renderer.domElement);
@@ -287,8 +283,8 @@ function init() {
 
   var northGeom = new THREE.PlaneGeometry(40, 100, 3, 3);
   var northObject = new THREE.Mesh(northGeom, new THREE.MeshLambertMaterial({
-    color: 0xffffff,
-    map: THREE.ImageUtils.loadTexture('./arrow.png')
+    color : 0xffffff,
+    map   : THREE.ImageUtils.loadTexture('./arrow.png')
   }));
   northObject.position.x = 0;
   northObject.position.z = -200;
@@ -304,6 +300,19 @@ function init() {
   scene.add(light);
 
   camera.position.z = 5;
+
+
+
+  var matP = new THREE.MeshBasicMaterial({
+    wireframe : true,
+    color     : 0x000000
+  });
+  var geomP = new THREE.PlaneGeometry(222, 211, 5, 5);
+  planeMesh = new THREE.Mesh(geomP, matP);
+  planeMesh.position.y = 0;
+  planeMesh.rotation.x = -Math.PI / 2;
+  // planeMesh.rotation.z = Math.PI / 2;
+  scene.add(planeMesh);
 
   // ========================================= STATS MONITOR ========================================= //
   stats = new Stats();
@@ -345,7 +354,7 @@ function init() {
     text.Longitude = Number(temp[1]);
     text.Elevation = Number(temp[2]);
   });
-  dataFolder.add(text, "radiusDegrees").min(0.1).max(180);
+  dataFolder.add(text, "radiusDegrees").min(0.01).max(5).step(0.001);
 
   // == YEAR == //
   var yearFolder = dataFolder.addFolder('Year');
@@ -500,10 +509,6 @@ function init() {
 
 
 
-
-
-
-
 /**
  * Binary search method
  * @param  {ms} mili time to search for
@@ -532,10 +537,6 @@ function binaryIndexOf(mili) {
 
   return currentIndex;
 }
-
-
-
-
 
 
 
@@ -604,8 +605,8 @@ function cleanData() {
   temp = [];
   // console.log(query.length);
   while(query.length > 0) {
-    if(query.length % 1000 == 0)
-      console.log(query.length);
+    // if(query.length % 1000 == 0)
+    //   console.log(query.length);
     temp.unshift(query.shift());
   }
   query = temp;
@@ -651,6 +652,7 @@ function handleEQ(ref, time, check, fileName) {
     var d = new Date();
 
   if(plane === "") {
+    runD3();
     var terrainLoader = new THREE.TerrainLoader();
     var data;
     terrainLoader.load('./' + fileName + '.store.bin', function(pass) {
@@ -671,7 +673,7 @@ function handleEQ(ref, time, check, fileName) {
       var maxRender = 0;
       var minRender = 111111111;
       for(i = 0, l = geometry.vertices.length; i < l; i++) {
-        geometry.vertices[i].z = data[i] / max * 8;
+        geometry.vertices[i].z = data[i] / max * 15;
 
         if(geometry.vertices[i].z > maxRender)
           maxRender = geometry.vertices[i].z;
@@ -679,7 +681,7 @@ function handleEQ(ref, time, check, fileName) {
           minRender = geometry.vertices[i].z;
       }
 
-      console.log("m:" + max + " min:" + min + " mr:" + maxRender + " minR: " + minRender);
+      // console.log("m:" + max + " min:" + min + " mr:" + maxRender + " minR: " + minRender);
       // console.log( max + " " + min );
 
       var material = new THREE.MeshPhongMaterial({
@@ -693,16 +695,16 @@ function handleEQ(ref, time, check, fileName) {
     });
   }
 
-  if(!text.playRunning)
-    console.log("ending terrain");
+  // if(!text.playRunning)
+  // console.log("ending terrain");
 
   if(time !== undefined) {
     // ==== CHECK OLD EQS ==== //
-    if(!text.playRunning)
-      console.log("= inside time check =" + time);
+    // if(!text.playRunning)
+    // console.log("= inside time check =" + time);
     if(currentEQ.length !== 0) {
-      if(!text.playRunning)
-        console.log("= inside current check =" + currentEQ.length + " " + lastIndex + " " + query.length);
+      // if(!text.playRunning)
+      // console.log("= inside current check =" + currentEQ.length + " " + lastIndex + " " + query.length);
       // == get rid of old no longer relevaent EQS == //
       var dTemp = new Date(query[lastIndex + currentEQ.length - 1].time);
       while(time - dTemp.getTime() > ref.playLife) {
@@ -721,17 +723,17 @@ function handleEQ(ref, time, check, fileName) {
       for(z = 0; z < currentEQ.length; z++) {
         dTemp = new Date(query[lastIndex + currentEQ.length - 1 - z].time);
         var matTemp = new THREE.LineBasicMaterial({
-          color: 0xff0000,
-          opacity: (1.0 - (time - dTemp.getTime()) / ref.playLife),
-          transparent: true,
-          alphaTest: 0
+          color       : 0xff0000,
+          opacity     : (1.0 - (time - dTemp.getTime()) / ref.playLife),
+          transparent : true,
+          alphaTest   : 0
         });
         currentEQ[z].material = matTemp;
       }
     }
     // ==== CHECK OLD EQS ==== //
-    if(!text.playRunning)
-      console.log("= out time check =" + time);
+    // if(!text.playRunning)
+    // console.log("= out time check =" + time);
 
     // ==== CREATE NEW EQS ==== //
     var startIndex = binaryIndexOf(time);
@@ -741,16 +743,16 @@ function handleEQ(ref, time, check, fileName) {
     }
 
     if(!(currentEQ.length > 0)) {
-      if(!text.playRunning)
-        console.log("ran");
+      // if(!text.playRunning)
+      // console.log("ran");
       var tempDate;
       for(var z = lastIndex - 1; z > startIndex; z--) {
         tempDate = new Date(query[z].time);
         if(Math.abs(time - tempDate.getTime()) < ref.playLife)
           break;
       }
-      if(!text.playRunning)
-        console.log("z: " + z);
+      // if(!text.playRunning)
+      // console.log("z: " + z);
       if(z < lastIndex)
         lastIndex = z + 1;
       else
@@ -758,22 +760,22 @@ function handleEQ(ref, time, check, fileName) {
     }
 
     if(!text.playRunning)
-      console.log("= check li:" + lastIndex + " si:" + startIndex + " =");
+    // console.log("= check li:" + lastIndex + " si:" + startIndex + " =");
 
-    var arrayTemp = [];
+      var arrayTemp = [];
     // var shape = new THREE.SphereGeometry( .5, 50, 50 );
     var shape = new THREE.SphereGeometry(.5, 50, 50);
     var y;
-    if(!text.playRunning) {
-      console.log();
-      console.log();
-      console.log();
-      console.log("start");
-    }
+    // if(!text.playRunning) {
+    //   console.log();
+    //   console.log();
+    //   console.log();
+    //   console.log("start");
+    // }
     for(y = startIndex; y < lastIndex; y++) {
       // var shape = new THREE.SphereGeometry( query[y].mag / 10, 50, 50 );
-      var tempDate
-      try {
+      var tempDate;
+      try{
         tempDate = new Date(query[y].time);
       } catch(err) {
         console.log(y + " " + query[y]);
@@ -783,19 +785,19 @@ function handleEQ(ref, time, check, fileName) {
       //   break;
 
       var shapeTemp = new THREE.LineBasicMaterial({
-        color: 0xff0000,
-        opacity: (1.0 - (time - tempDate.getTime()) / ref.playLife),
-        transparent: true,
-        alphaTest: 0
+        color       : 0xff0000,
+        opacity     : (1.0 - (time - tempDate.getTime()) / ref.playLife),
+        transparent : true,
+        alphaTest   : 0
       });
       var shapeMesh = new THREE.Mesh(shape, shapeTemp);
 
-      var lat = ref.Latitude;
+      var lat = text.Latitude;
       var latDif = lat - query[y].latitude;
       var latMax = text.radiusDegrees;
       var latPos = (latDif / latMax) * 105;
 
-      var long = ref.Longitude;
+      var long = text.Longitude;
       var longDif = long - query[y].longitude;
       var longMax = text.radiusDegrees;
       var longPos = (longDif / longMax) * 105 * -1;
@@ -811,17 +813,17 @@ function handleEQ(ref, time, check, fileName) {
 
       arrayTemp.unshift(shapeMesh);
       scene.add(shapeMesh);
-      if(y % 10 == 0 && !text.playRunning) {
-        console.log(y);
-      }
+      // if(y % 10 == 0 && !text.playRunning) {
+      //   console.log(y);
+      // }
     }
-    if(!text.playRunning) {
-      console.log("Done");
-      console.log();
-      console.log();
-      console.log();
-      console.log();
-    }
+    // if(!text.playRunning) {
+    //   console.log("Done");
+    //   console.log();
+    //   console.log();
+    //   console.log();
+    //   console.log();
+    // }
 
     lastIndex = startIndex;
 
@@ -829,28 +831,28 @@ function handleEQ(ref, time, check, fileName) {
     // while( arrayTemp.length > 0 )
     //   currentEQ.push( arrayTemp.shift() );
   } else if(check !== undefined) {
-    console.log("ran");
+    // console.log("ran");
     cleanGeo();
-    console.log("===== " + ref.Latitude + " " + ref.Longitude + " =====");
+    // console.log("===== " + ref.Latitude + " " + ref.Longitude + " =====");
     var geometry = new THREE.SphereGeometry(1, 50, 50);
     for(var i = (query.length - 1); i >= 0; i--) {
       var mat = new THREE.LineBasicMaterial({
-        color: Math.random() * 0xffffff,
-        opacity: 1.0,
-        transparent: false,
-        alphaTest: 0
+        color       : Math.random() * 0xffffff,
+        opacity     : 1.0,
+        transparent : false,
+        alphaTest   : 0
       });
       var earthquake = new THREE.Mesh(geometry, mat);
 
       // TODO Compress these math equation
       var lat = ref.Latitude;
       var latDif = lat - query[i].latitude;
-      var latMax = 1;
+      var latMax = text.radiusDegrees;
       var latPos = (latDif / latMax) * 105;
 
       var long = ref.Longitude;
       var longDif = long - query[i].longitude;
-      var longMax = 1;
+      var longMax = text.radiusDegrees;
       var longPos = (longDif / longMax) * 105 * -1;
 
       var depth = 0;
@@ -865,9 +867,9 @@ function handleEQ(ref, time, check, fileName) {
 
       scene.add(earthquake);
       currentEQ.push(earthquake);
-      if(i % 100 == 0) {
-        console.log(i);
-      }
+      // if(i % 100 == 0) {
+      //   console.log(i);
+      // }
     }
   }
   //
@@ -883,17 +885,13 @@ function handleEQ(ref, time, check, fileName) {
   lastRender = e;
 
   if(!text.playRunning) {
-    console.log(d.getTime() - e.getTime());
-    console.log(currentEQ.length);
+    // console.log(d.getTime() - e.getTime());
+    // console.log(currentEQ.length);
     $(".loading").css("display", "none");
   }
   DOINGWORK = false;
   // console.log( binaryIndexOf( 946898715809 ) ); // 902 "2003-05-09T11:41:59.960Z" 1052480519960 1053192436220
 }
-
-
-
-
 
 
 
@@ -965,6 +963,349 @@ THREE.TerrainLoader.prototype = {
 
 
 
+/*
+▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄
+▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌
+▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀▀▀▀▀▀█░▌
+▐░▌       ▐░▌          ▐░▌
+▐░▌       ▐░▌ ▄▄▄▄▄▄▄▄▄█░▌
+▐░▌       ▐░▌▐░░░░░░░░░░░▌
+▐░▌       ▐░▌ ▀▀▀▀▀▀▀▀▀█░▌
+▐░▌       ▐░▌          ▐░▌
+▐░█▄▄▄▄▄▄▄█░▌ ▄▄▄▄▄▄▄▄▄█░▌
+▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌
+▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀▀
+
+ */
+function runD3() {
+  sceneCss = new THREE.Scene();
+
+  var margin = {
+      top    : 20,
+      right  : 40,
+      bottom : 30,
+      left   : 40
+    },
+    width = 1000 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom,
+    minLat = text.Latitude - text.radiusDegrees,
+    maxLat = text.Latitude + text.radiusDegrees,
+    minLong = text.Longitude - text.radiusDegrees,
+    maxLong = text.Longitude + text.radiusDegrees;
+
+  var f = d3.format(".3f");
+  var latHolder = {};
+  var longHolder = {};
+  var comb = {};
+  for(var i = 0; i < query.length; i++) {
+    if(latHolder[f(query[i].latitude)] == undefined) {
+      latHolder[f(query[i].latitude)] = {};
+      latHolder[f(query[i].latitude)].point = f(query[i].latitude);
+      latHolder[f(query[i].latitude)].count = 1;
+    } else
+      latHolder[f(query[i].latitude)].count += 1;
+
+    if(longHolder[f(query[i].longitude)] == undefined) {
+      longHolder[f(query[i].longitude)] = {};
+      longHolder[f(query[i].longitude)].point = f(query[i].longitude);
+      longHolder[f(query[i].longitude)].count = 1;
+    } else
+      longHolder[f(query[i].longitude)].count += 1;
+
+    if(comb[f(query[i].longitude) + " " + f(query[i].latitude)] == undefined) {
+      comb[f(query[i].longitude) + " " + f(query[i].latitude)] = {};
+      comb[f(query[i].longitude) + " " + f(query[i].latitude)].lat = f(query[i].latitude);
+      comb[f(query[i].longitude) + " " + f(query[i].latitude)].long = f(query[i].longitude);
+    }
+  }
+  var data = _.valuesIn(latHolder);
+  var data2 = _.valuesIn(longHolder);
+  var data3 = _.valuesIn(comb);
+
+
+
+
+
+
+
+
+
+
+  // LAT
+  // LAT
+  // LAT
+  // LAT
+  // LAT
+  // LAT
+  // LAT
+  // setup x
+  var xValue = function(d) {
+      return d.point;
+    }, // data -> value
+    xScale = d3.scale.linear().range([0, width]),
+    xMap = function(d) {
+      return xScale(xValue(d));
+    }, // data -> display
+    xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+  // setup y
+  var yValue = function(d) {
+      return d.count;
+    }, // data -> value
+    yScale = d3.scale.linear().range([height, 0]),
+    yMap = function(d) {
+      return yScale(yValue(d));
+    }, // data -> display
+    yAxis = d3.svg.axis().scale(yScale).orient("left");
+
+  // add the graph canvas to the body of the webpage
+  var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .attr("id", "latGraph")
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  xScale.domain([minLat, maxLat]);
+  yScale.domain([d3.min(data, yValue) - 1, d3.max(data, yValue) + 1]);
+
+  // x-axis
+  svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis)
+    .append("text")
+    .attr("class", "label")
+    .attr("x", width)
+    .attr("y", -6)
+    .style("text-anchor", "end")
+    .text("latitude");
+
+  // y-axis
+  svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis)
+    .append("text")
+    .attr("class", "label")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 6)
+    .attr("dy", ".71em")
+    .style("text-anchor", "end")
+    .text("# of Earthquakes");
+
+  // draw dots
+  svg.selectAll(".dot")
+    .data(data)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("r", 3.5)
+    .attr("cx", xMap)
+    .attr("cy", yMap);
+
+
+
+
+
+
+
+  // LONG
+  // LONG
+  // LONG
+  // LONG
+  // LONG
+  // LONG
+  // LONG
+  // LONG
+  var xValue2 = function(d) {
+      return d.point;
+    }, // data -> value
+    xScale2 = d3.scale.linear().range([0, width]), // value -> display
+    xMap2 = function(d) {
+      return xScale2(xValue2(d));
+    }, // data -> display
+    xAxis2 = d3.svg.axis().scale(xScale2).orient("bottom");
+
+  // setup y
+  var yValue2 = function(d) {
+      return d.count;
+    }, // data -> value
+    yScale2 = d3.scale.linear().range([height, 0]), // value -> display
+    yMap2 = function(d) {
+      return yScale2(yValue2(d));
+    }, // data -> display
+    yAxis2 = d3.svg.axis().scale(yScale2).orient("left");
+
+  // add the graph canvas to the body of the webpage
+  var svg2 = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .attr("id", "longGraph")
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  xScale2.domain([minLong, maxLong]);
+  yScale2.domain([d3.min(data2, yValue2) - 1, d3.max(data2, yValue2) + 1]);
+
+  // x-axis
+  svg2.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis2)
+    .append("text")
+    .attr("class", "label")
+    .attr("x", width)
+    .attr("y", -6)
+    .style("text-anchor", "end")
+    .text("longitude");
+
+  // y-axis
+  svg2.append("g")
+    .attr("class", "y axis")
+    .call(yAxis2)
+    .append("text")
+    .attr("class", "label")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 6)
+    .attr("dy", ".71em")
+    .style("text-anchor", "end")
+    .text("# of Earthquakes");
+
+  // draw dots
+  svg2.selectAll(".dot")
+    .data(data2)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("r", 3.5)
+    .attr("cx", xMap2)
+    .attr("cy", yMap2);
+
+
+
+
+
+
+
+
+
+  console.log("plase: " + data3);
+  var xValue3 = function(d) {
+      return d.long;
+    }, // data -> value
+    xScale3 = d3.scale.linear().range([0, width]), // value -> display
+    xMap3 = function(d) {
+      return xScale3(xValue3(d));
+    }, // data -> display
+    xAxis3 = d3.svg.axis().scale(xScale3).orient("bottom");
+
+    // setup y
+  var yValue3 = function(d) {
+      return d.lat;
+    }, // data -> value
+    yScale3 = d3.scale.linear().range([height, 0]), // value -> display
+    yMap3 = function(d) {
+      return yScale3(yValue3(d));
+    }, // data -> display
+    yAxis3 = d3.svg.axis().scale(yScale3).orient("left");
+
+    // add the graph canvas to the body of the webpage
+  var svg3 = d3.select("body").append("svg")
+      .attr("width", "1000px")
+      .attr("height", "1000px")
+      .attr("id", "topdown")
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  xScale3.domain([minLong, maxLong]);
+  yScale3.domain([minLat, maxLat]);
+
+    // x-axis
+  svg3.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis3)
+      .append("text")
+      .attr("class", "label")
+      .attr("x", width)
+      .attr("y", -6)
+      .style("text-anchor", "end")
+      .text("longitude");
+
+    // y-axis
+  svg3.append("g")
+      .attr("class", "y axis")
+      .call(yAxis3)
+      .append("text")
+      .attr("class", "label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("latitude");
+
+    // draw dots
+  svg3.selectAll(".dot")
+      .data(data3)
+      .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", 3.5)
+      .attr("cx", xMap3)
+      .attr("cy", yMap3);
+
+
+
+
+
+
+
+
+
+
+  var div = new THREE.CSS3DObject($('#latGraph')[0]);
+  div.position.x = 200;
+  div.scale.x = .23;
+  div.scale.y = .23;
+  div.rotation.x = -Math.PI / 2;
+  div.rotation.z = Math.PI / 2;
+  sceneCss.add(div);
+
+  var div2 = new THREE.CSS3DObject($('#longGraph')[0]);
+  div2.position.z = 200;
+  div2.scale.x = .24;
+  div2.scale.y = .24;
+  div2.rotation.x = -Math.PI / 2;
+  // div2.rotation.z = Math.PI / 2;
+  sceneCss.add(div2);
+
+  var div3 = new THREE.CSS3DObject($('#topdown')[0]);
+  div3.position.z = 120;
+  // div3.position.y = 200;
+  div3.scale.x = .24;
+  div3.scale.y = .45;
+  div3.rotation.x = -Math.PI / 2;
+  // div2.rotation.z = Math.PI / 2;
+  sceneCss.add(div3);
+
+  renderCss = new THREE.CSS3DRenderer();
+  renderCss.setSize(window.innerWidth, window.innerHeight);
+  renderCss.domElement.style.position = 'absolute';
+  renderCss.domElement.style.top = 0;
+  renderCss.domElement.style["pointer-events"] = "none";
+  document.body.appendChild(renderCss.domElement);
+
+  console.log(query);
+
+  console.log("<lat: " + minLat + ", >lat: " + maxLat + " (" + text.Latitude + ", " + text.Longitude + ") ");
+}
+
+
+
+
+
+
+
+
+
+
 /**
  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄        ▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
 ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌      ▐░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
@@ -1021,4 +1362,6 @@ function render() {
   }
 
   renderer.render(scene, camera);
+  if(renderCss != undefined)
+    renderCss.render(sceneCss, camera);
 }

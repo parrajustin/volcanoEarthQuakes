@@ -29,13 +29,13 @@ def runBuild():
     valBroken = val.split(' ')
     subprocess.call(valBroken)
     runWarp()
-
+#
 def runWarp():
     val = 'gdalwarp -te ' + str(sys.argv[4]) + ' ' + str(sys.argv[2]) + ' ' + str(sys.argv[3])
     valBroken = val.split(' ')
     subprocess.call(valBroken)
     runTranslate()
-
+#
 def runTranslate():
     val = 'gdal_translate -scale 0 2470 0 65535 -ot UInt16 -outsize 400 400 -of ENVI ' + str(sys.argv[3]) + ' public/' + str(sys.argv[5]) + '.store.bin'
     valBroken = val.split(' ')
@@ -58,7 +58,7 @@ def runPretty():
     makeXML()
 
 def makeXML():
-    f = open(str(sys.argv[6]) + '/out/' + str(sys.argv[5]) + '.xml','w')
+    f = open(str(sys.argv[6]) + 'out/' + str(sys.argv[5]) + '.xml','w')
     f.write('<Map srs="+proj=utm +ellps=WGS84 +datum=WGS84 +units=m +no_defs">\n')
     f.write('  <Style name="color relief style">\n')
     f.write('    <Rule>\n')
@@ -105,7 +105,7 @@ def makeXML():
     f.write('      <StyleName>lake style</StyleName>\n')
     f.write('      <Datasource>\n')
     f.write('          <Parameter name="type">shape</Parameter>\n')
-    f.write('          <Parameter name="file">/home/jparra/Documents/veq/resources/alaska_water.shp</Parameter>\n')
+    f.write('          <Parameter name="file">/home/jparra/Documents/veq/resources/water_polygons.shp</Parameter>\n')
     f.write('      </Datasource>\n')
     f.write('  </Layer>\n')
     f.write('</Map>\n')

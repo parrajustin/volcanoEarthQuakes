@@ -30,3 +30,4 @@ node_modules
 public/*.store.bin
 public/*.store.png
 storage
+resources
