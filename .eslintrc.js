@@ -7,6 +7,7 @@ module.exports = {
     "array-bracket-spacing": ["error", "never"],
     "no-multiple-empty-lines": ["error", { "max": 10, "maxEOF": 1 }],
     "no-multi-spaces": ["error", { "exceptions": { "VariableDeclarator": true } }],
+    "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
     "key-spacing": ["error", {
       "multiLine": {
         "beforeColon": false,
