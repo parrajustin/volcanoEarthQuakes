@@ -14,18 +14,18 @@ var _             = require('lodash');
 
 mapnik.register_default_fonts();
 mapnik.register_default_input_plugins();
-var fileLocation = '/media/jparra/linuxExtra/TIF/';
+var fileLocation = '/home/drive/TIF/';
 var app = express();
 
 store.initSync({
-  dir        : '../../../../storage/',
-  stringify  : JSON.stringify,
-  parse      : JSON.parse,
-  encoding   : 'utf8',
-  logging    : true,
-  continuous : true,
-  interval   : false,
-  ttl        : false // ttl* [NEW], can be true for 24h default or a number in MILLISECONDS
+  dir: '../../../../storage/',
+  stringify: JSON.stringify,
+  parse: JSON.parse,
+  encoding: 'utf8',
+  logging: true,
+  continuous: true,
+  interval: false,
+  ttl: false // ttl* [NEW], can be true for 24h default or a number in MILLISECONDS
 });
 // store.setItem('pngs',{});
 
@@ -58,6 +58,14 @@ app.use(compression());
 app.use(bodyParser.json());
 
 // ================ EXPRESS ROUTES SETUP ================
+app.post('*/api/handshake', function(req, res) {
+  res.end(JSON.stringify({
+    success: "success",
+    server: "mapnik",
+    status: 200
+  }));
+});
+
 app.post('*/api/map', function(req, res) {
   // -153.7451997 59.4849066 -151.7451997 61.4849066
   console.log(req.body);
@@ -65,16 +73,18 @@ app.post('*/api/map', function(req, res) {
   var maxLat = req.body.maxLat;
   var minLong = req.body.minLong;
   var maxLong = req.body.maxLong;
+  var vName = req.body.n;
+  var vDeg = req.body.d;
   // ASTGTM2_N51E177_dem
   //
-  // console.log(minLat + " " + maxLat + " " + minLong + " " + maxLong);
+  console.log(minLat + " " + maxLat + " " + minLong + " " + maxLong);
 
   var images = store.getItem('pngs');
   if(JSON.stringify(store.getItem('pngs')) !== '{}') {
     if(images[minLong + ' ' + minLat + ' ' + maxLong + ' ' + maxLat] !== undefined) {
       res.end(JSON.stringify({
-        success : images[minLong + ' ' + minLat + ' ' + maxLong + ' ' + maxLat],
-        status  : 200
+        success: images[minLong + ' ' + minLat + ' ' + maxLong + ' ' + maxLat],
+        status: 200
       }));
       return;
     }
@@ -90,24 +100,24 @@ app.post('*/api/map', function(req, res) {
 
   console.log("log: " + stringOfFiles);
   var name = randomstring.generate({
-    length  : 12,
-    charset : 'alphabetic'
+    length: 12,
+    charset: 'alphabetic'
   });
   while(_.indexOf(_.valuesIn(images), name) !== -1)
     name = randomstring.generate({
-      length  : 12,
-      charset : 'alphabetic'
+      length: 12,
+      charset: 'alphabetic'
     });
 
   var options = {
-    mode : 'text',
-    args : [stringOfFiles, fileLocation + 'out/' + name + '.vrt', fileLocation + 'out/' + name + '.tif',
+    mode: 'text',
+    args: [stringOfFiles, fileLocation + 'out/' + name + '.vrt', fileLocation + 'out/' + name + '.tif',
       minLong + ' ' + minLat + ' ' + maxLong + ' ' + maxLat, name, fileLocation
     ]
   };
   var options2 = {
-    mode : 'text',
-    args : [fileLocation, name]
+    mode: 'text',
+    args: [fileLocation, name]
   };
   PythonShell.run('master.py', options, function(err, results) {
     if(err) console.log("ignoring error");
@@ -131,14 +141,14 @@ app.post('*/api/map', function(req, res) {
             // console.log( "saved map image to map.png" );
 
             images = store.getItem('pngs');
-            images[minLong + ' ' + minLat + ' ' + maxLong + ' ' + maxLat] = name;
+            images[minLong + ' ' + minLat + ' ' + maxLong + ' ' + maxLat] = name + "_" + vName + "_" + vDeg;
             store.setItem('pngs', images);
 
             PythonShell.run('del.py', options2, function(err, results) {
               if(err) throw err;
               res.end(JSON.stringify({
-                success : name,
-                status  : 200
+                success: name + "_" + vName + "_" + vDeg,
+                status: 200
               }));
             });
           });
@@ -156,11 +166,11 @@ app.post('*/api/map', function(req, res) {
 
 app.get('*/:fileName', function(req, res) {
   var options = {
-    root     : __dirname,
-    dotfiles : 'deny',
-    headers  : {
-      'x-timestamp' : Date.now(),
-      'x-sent'      : true
+    root: __dirname,
+    dotfiles: 'deny',
+    headers: {
+      'x-timestamp': Date.now(),
+      'x-sent': true
     }
   };
 
@@ -173,7 +183,7 @@ app.get('*/:fileName', function(req, res) {
 });
 
 // ================ SERVER LISTEN SETUP ================
-var server = app.listen(80, function() {
+var server = app.listen(81, function() {
   var host = server.address().address;
   var port = server.address().port;
 

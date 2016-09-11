@@ -12,11 +12,6 @@ module.exports = {
       "multiLine": {
         "beforeColon": false,
         "afterColon": true
-      },
-      "align": {
-        "beforeColon": true,
-        "afterColon": true,
-        "on": "colon"
       }
     }],
     "keyword-spacing": ["error", {

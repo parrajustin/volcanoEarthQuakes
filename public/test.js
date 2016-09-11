@@ -59,17 +59,18 @@ process.argv.forEach(function(val, index, array) {
  * @param  {string} time  the string representation of time ins iso format
  * @param  {int} mag   the magnitude of the earthquake
  */
-function Point(lat, long, depth, time, mag) {
+function Point(lat, long, depth, time, mag, ms) {
   this.time = time;
   this.lat = lat;
   this.long = long;
   this.depth = depth;
   this.mag = mag;
+  this.ms = ms;
   this.getLat = function() { return this.lat; };
   this.getLong = function() { return this.long; };
   this.getDepth = function() { return this.depth; };
   this.getTime = function() { return this.time; };
-  this.toString = function() { return this.time + ',' + this.lat + ',' + this.long + ',' + this.depth + ',' + this.mag; };
+  this.toString = function() { return this.time + ',' + this.lat + ',' + this.long + ',' + this.depth + ',' + this.mag + ',' + this.ms; };
 }
 
 /**
@@ -90,6 +91,9 @@ function clean() {
   // console.log("test" + JSON.stringify(cv[1]));
   var temp = [];
   for(var i = 0; i < Object.keys(query).length; i++) {
+    if(!(query[i].type === "b" || query[i].type === "a"))
+      continue;
+
     var sec = query[i].sec;
     sec = sec.split('');
     while(sec.length < 4) {
@@ -100,18 +104,25 @@ function clean() {
 
     query[i].time = query[i].year + '-' + pad(query[i].month) + '-' + pad(query[i].day) + 'T' + pad(query[i].hour) + ':' +
       pad(query[i].min) + ':' + sec + '0Z';
-    query[i].latitude = (Number(query[i].lat) * 1.0 + ((Number(query[i].latM) * 1.0 + (Number(query[i].latMd) / 100.0)) * 0.0166667));
-    query[i].longitude = (Number(query[i].long) * 1.0 + ((Number(query[i].longM) * 1.0 + (Number(query[i].longMd) / 100.0)) * 0.0166667)) * -1.0;
+    query[i].latitude = (Number(query[i].lat) + Number(query[i].latMin) / 100 / 60) * (query[i].latDir === "N" ? 1.0 : -1.0);
+    query[i].longitude = (Number(query[i].long) + Number(query[i].longMin) / 100 / 60) * (query[i].longDir === "E" ? 1.0 : -1.0);
 
-    temp.unshift(new Point(query[i].latitude, query[i].longitude, query[i].depth, query[i].time, Number(query[i].mag)));
+    if( Number(query[i].mag) < 0 || Number(query[i].mag) > 1)
+      continue;
+
+    temp.push(new Point(Number(query[i].latitude), Number(query[i].longitude), Number(query[i].depth2) / 100,
+      query[i].time, Number(query[i].mag) / 10, new Date(query[i].time).getTime()));
   }
+  console.log(temp.length);
 
   var file = fs.createWriteStream((out === undefined ? 'public/array.csv' : out));
   file.on('error', function(err) { console.error(err);});
-  file.write("time,lat,long,depth,mag\n");
+  file.write("time,lat,long,depth,mag,ms\n");
   temp.forEach(function(v) { file.write(v.toString() + '\n'); });
   file.end();
 }
+
+
 
 
 
@@ -220,7 +231,25 @@ function cluster() {
       break;
   }
 
+  var count = {};
+  labels.forEach(function(num) {
+    if(count[num] === undefined) {
+      count[num] = 1;
+    } else
+      count[num] += 1;
+  });
+  console.log(count);
+
   console.log(JSON.stringify(centers));
+  var file = fs.createWriteStream((out === undefined ? 'public/array.csv' : out));
+  file.on('error', function(err) { console.error(err);});
+  file.write("time,lat,long,depth,mag,cluster\n");
+  var l = 0;
+  temp.forEach(function(v) {
+    file.write(v.toString() + "," + labels[l] + "\n");
+    l++;
+  });
+  file.end();
 }
 
 /**
